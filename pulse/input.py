@@ -42,6 +42,8 @@ class InputBridge:
             self._send(("key", name, True))
 
     def _release(self, key, injected=False):
+        if injected:
+            return
         name = key_name(key)
         self._keys.discard(name)
         self._send(("key", name, False))

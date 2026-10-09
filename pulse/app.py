@@ -27,6 +27,7 @@ class App(ctk.CTk):
         self.geometry("560x850")
         self.minsize(530, 680)
         self.configure(fg_color=BG)
+        self.smoke = smoke
         self.settings = load_settings()
         self.events = queue.Queue(maxsize=2048)
         self.armed = False
@@ -120,7 +121,7 @@ class App(ctk.CTk):
                                        hover_color="#32425c", height=32, command=self.capture_key)
         self.bind_button.grid(row=4, column=0, sticky="ew", padx=16, pady=(4, 14))
         self.hotkey = self.settings.hotkey
-        self.entry(activation, "Start delay (seconds)", "delay", self.settings.delay, 2, 1)
+        self.entry(activation, "Start delay (seconds)", "delay", self.settings.delay, 1, 1)
 
         options = self.card("03  /  FINE TUNE")
         options.grid_columnconfigure((0, 1), weight=1)
@@ -198,7 +199,8 @@ class App(ctk.CTk):
     def persist(self):
         try:
             self.settings = self.collect()
-            save_settings(self.settings)
+            if not self.smoke:
+                save_settings(self.settings)
             return True
         except (ValueError, OSError) as exc:
             messagebox.showerror("Check settings", str(exc), parent=self)
@@ -314,7 +316,7 @@ class App(ctk.CTk):
         self.status.configure(text=f"●  {state}", text_color=ACCENTS[self.fields["accent"].get()][0])
         self.count.configure(text=f"{snapshot.clicks:,} pulses  ·  {snapshot.elapsed:.1f}s")
         mode = self.fields["mode"].get()
-        if not self.bridge:
+        if not self.bridge and not self.smoke:
             self.status.configure(text="●  Input unavailable", text_color="#ff8585")
         else:
             hint = {"Toggle": f"{self.hotkey.upper()} to start / stop", "Hold key": f"Hold {self.hotkey.upper()} to click", "Hold mouse": "Arm, then hold your trigger outside this window"}[mode]
@@ -328,9 +330,12 @@ class App(ctk.CTk):
         if self.bridge:
             self.bridge.close()
         try:
-            save_settings(self.collect())
+            if not self.smoke:
+                save_settings(self.collect())
         except (ValueError, OSError):
             pass
+        for callback in self.tk.call("after", "info"):
+            self.after_cancel(callback)
         self.destroy()
 
 
@@ -348,7 +353,10 @@ def main():
             if "--screenshot" in sys.argv:
                 from PIL import ImageGrab
                 app.update()
-                ImageGrab.grab(bbox=(app.winfo_rootx(), app.winfo_rooty(), app.winfo_rootx() + app.winfo_width(), app.winfo_rooty() + app.winfo_height())).save("preview.png")
+                if sys.platform == "win32":
+                    import ctypes
+                    hwnd = ctypes.windll.user32.GetParent(app.winfo_id())
+                    ImageGrab.grab(window=hwnd).save("preview.png")
             app.close()
         app.after(1200, check)
     app.mainloop()
