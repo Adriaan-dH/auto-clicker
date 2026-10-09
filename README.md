@@ -71,8 +71,8 @@ The smoke test renders the UI, validates the controls and theme changes, and exi
 Pushes and pull requests run tests and build both platforms in GitHub Actions. To publish a release:
 
 ```sh
-git tag v1.0.0
-git push origin main v1.0.0
+git tag v1.0.1
+git push origin main v1.0.1
 ```
 
 The release workflow uploads portable binaries and SHA-256 checksums. Future releases should update `pulse/__init__.py` and use a new matching `vX.Y.Z` tag. Release artifacts are unsigned; no signing certificate is configured.

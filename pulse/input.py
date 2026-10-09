@@ -61,5 +61,17 @@ class InputBridge:
         return self.controller.position
 
     def close(self):
-        self.mouse.stop()
-        self.keyboard.stop()
+        for listener in (self.mouse, self.keyboard):
+            listener.stop()
+            if sys.platform.startswith("linux") and hasattr(listener, "_display_stop"):
+                # pynput 1.8.2 queues RECORD disable on its blocked record
+                # connection. Flush the separate X11 control connection so an
+                # idle listener exits without waiting for another input event.
+                try:
+                    listener._display_stop.record_disable_context(listener._context)
+                    listener._display_stop.flush()
+                except Exception:
+                    # The listener can already have closed its X connection.
+                    pass
+            if listener.ident is not None:
+                listener.join(timeout=1)
