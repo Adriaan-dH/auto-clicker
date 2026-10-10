@@ -6,6 +6,9 @@ import os
 from pathlib import Path
 import sys
 
+MAX_CPS = 10_000
+CPS_WARNING_THRESHOLD = 200
+
 
 @dataclass(frozen=True)
 class Settings:
@@ -25,7 +28,7 @@ class Settings:
     topmost: bool = False
 
     def validate(self):
-        for name, low, high in (("cps", 0.1, 200), ("delay", 0, 30), ("jitter", 0, 50)):
+        for name, low, high in (("cps", 0.1, MAX_CPS), ("delay", 0, 30), ("jitter", 0, 50)):
             value = getattr(self, name)
             if isinstance(value, bool) or not isinstance(value, (int, float)) or not math.isfinite(value) or not low <= value <= high:
                 raise ValueError(f"{name.upper()} must be between {low} and {high}.")

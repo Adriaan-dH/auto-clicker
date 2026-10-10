@@ -71,3 +71,9 @@ class EngineTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             self.engine.start(Settings(cps=0))
         self.assertFalse(self.engine.active)
+
+    def test_thousands_rate_respects_limit(self):
+        self.engine.start(Settings(cps=4321.5, delay=0, limit=20))
+        self.wait_complete()
+        self.assertEqual(len(self.calls), 20)
+        self.assertEqual(self.engine.snapshot().state, "Complete")

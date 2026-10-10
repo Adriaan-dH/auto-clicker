@@ -10,7 +10,7 @@ import customtkinter as ctk
 
 from . import __version__
 from .engine import ClickEngine
-from .model import Settings, load_settings, save_settings
+from .model import CPS_WARNING_THRESHOLD, Settings, load_settings, save_settings
 
 BG = "#0c111b"
 PANEL = "#151d2c"
@@ -74,7 +74,6 @@ class App(ctk.CTk):
         title = ctk.CTkFrame(header, fg_color="transparent")
         title.pack(side="left")
         self.label(title, "PULSE", 24).pack(anchor="w")
-        self.label(title, "Your rhythm. Every click.", 12, MUTED).pack(anchor="w")
         self.label(header, f"v{__version__}", 11, MUTED).pack(side="right")
 
         hero = ctk.CTkFrame(self, fg_color=PANEL, corner_radius=18)
@@ -107,10 +106,17 @@ class App(ctk.CTk):
         self.option(rate, "Output button", "button", ["left", "right", "middle"], self.settings.button, 0, 1)
         presets = ctk.CTkFrame(rate, fg_color="transparent")
         presets.grid(row=3, column=0, columnspan=2, sticky="ew", padx=16, pady=(0, 12))
-        self.label(presets, "QUICK SET", 10, MUTED).pack(side="left", padx=(0, 12))
-        for value in (1, 10, 25, 50, 100):
-            ctk.CTkButton(presets, text=str(value), width=48, height=26, fg_color=FIELD,
-                          hover_color="#32425c", command=lambda v=value: self.set_rate(v)).pack(side="left", padx=3)
+        self.label(presets, "QUICK SET", 10, MUTED).pack(side="left", padx=(0, 8))
+        for value in (1, 10, 25, 50, 100, 500, 1000):
+            ctk.CTkButton(presets, text=str(value), width=44, height=26, fg_color=FIELD,
+                          font=("Segoe UI", 11), hover_color="#32425c",
+                          command=lambda v=value: self.set_rate(v)).pack(side="left", padx=2)
+        self.rate_warning = self.label(rate,
+            f"Above {CPS_WARNING_THRESHOLD} CPS, clicking may be unreliable. Your system or target app may register fewer clicks.",
+            12, "#f4bd6a", wraplength=420, justify="left")
+        self.rate_warning.grid(row=4, column=0, columnspan=2, sticky="w", padx=16, pady=(0, 12))
+        self.fields["cps"].trace_add("write", self.update_rate_warning)
+        self.update_rate_warning()
 
         activation = self.card("02  /  ACTIVATION")
         activation.grid_columnconfigure((0, 1), weight=1)
@@ -187,6 +193,16 @@ class App(ctk.CTk):
 
     def set_rate(self, value):
         self.fields["cps"].set(str(value))
+
+    def update_rate_warning(self, *_):
+        try:
+            high_rate = float(self.fields["cps"].get()) > CPS_WARNING_THRESHOLD
+        except ValueError:
+            high_rate = False
+        if high_rate:
+            self.rate_warning.grid()
+        else:
+            self.rate_warning.grid_remove()
 
     def collect(self):
         data = {name: variable.get() for name, variable in self.fields.items()}

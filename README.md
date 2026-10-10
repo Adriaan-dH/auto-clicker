@@ -17,7 +17,7 @@ chmod +x PulseClicker-Linux-x64
 
 Linux builds target Ubuntu 22.04 or newer (glibc 2.35+). Native Wayland global input is not supported; choose an X11 / Xorg desktop session. WSL is useful for development, but run the Windows executable to control the Windows desktop.
 
-1. Set the click rate (0.1–200 pulses per second) and output mouse button.
+1. Set any custom click rate from 0.1 to 10,000 pulses per second (including fractional values) and choose the output mouse button. Quick-set buttons include 500 and 1,000 CPS. Above 200 CPS, an inline warning explains that clicking may be unreliable and your system or target app may register fewer clicks. This is a caution threshold, not a measured performance guarantee or a blocking limit.
 2. Choose an activation mode:
    - **Toggle:** press **F6** or Start to start / stop.
    - **Hold key:** hold **F6** to click; release to stop. The Arm button marks the app ready; holding the shortcut also works directly.
@@ -71,8 +71,8 @@ The smoke test renders the UI, validates the controls and theme changes, and exi
 Pushes and pull requests run tests and build both platforms in GitHub Actions. To publish a release:
 
 ```sh
-git tag v1.0.1
-git push origin main v1.0.1
+git tag v1.0.2
+git push origin main v1.0.2
 ```
 
 The release workflow uploads portable binaries and SHA-256 checksums. Future releases should update `pulse/__init__.py` and use a new matching `vX.Y.Z` tag. Release artifacts are unsigned; no signing certificate is configured.

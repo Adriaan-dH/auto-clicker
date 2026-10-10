@@ -66,6 +66,15 @@ class AppTests(unittest.TestCase):
         self.app._bounds = (10, 10, 200, 200)
         self.assertFalse(self.app.emit(Settings(fixed=True, x=100, y=100)))
 
+    def test_custom_rate_warning_tracks_edits_and_presets(self):
+        for value, warned in ((200, False), (200.1, True), (500, True), (1000, True), (4321.5, True), (10000, True), (10, False)):
+            with self.subTest(value=value):
+                self.app.set_rate(value)
+                self.assertEqual(self.app.collect().cps, value)
+                self.assertEqual(bool(self.app.rate_warning.grid_info()), warned)
+        self.app.fields["cps"].set("")
+        self.assertFalse(self.app.rate_warning.grid_info())
+
 
 if __name__ == "__main__":
     unittest.main()
